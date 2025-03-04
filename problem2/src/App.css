@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+body {
+  background: linear-gradient(135deg, #e6f7ff 0%, #d9f0ff 100%);
+  font-family: 'Inter', sans-serif;
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -9,67 +14,326 @@
 }
 
 /* Custom styles for the currency swap form */
-.card {
-  background-color: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+.swap-card {
+  background-color: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.swap-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  background-color: #f0f4f9;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+}
+
+.swap-tab {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 0.5rem;
+}
+
+.swap-tab.active {
+  background-color: #6366f1;
+  color: white;
+}
+
+.currency-input-container {
+  background-color: #f8fafc;
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
-.card-body {
-  padding: 2rem;
+.currency-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 1rem;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
-/* Token dropdown styling */
-.dropdown .dropdown-content {
-  max-height: 300px;
+.currency-selector:hover {
+  background-color: #f8fafc;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.currency-selector img {
+  width: 24px;
+  height: 24px;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+}
+
+.currency-amount {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 1.25rem;
+  text-align: right;
+  outline: none;
+  font-weight: 500;
+}
+
+.swap-button {
+  background-color: #00bcd4;
+  color: white;
+  border: none;
+  border-radius: 1rem;
+  padding: 1rem;
+  width: 100%;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.swap-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.6s;
+}
+
+.swap-button:hover {
+  background-color: #00acc1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+.swap-button:hover:before {
+  left: 100%;
+}
+
+.swap-button:active {
+  transform: translateY(0);
+}
+
+.swap-button:disabled {
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.swap-button:disabled:before {
+  display: none;
+}
+
+.arrow-icon {
+  background-color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -0.75rem auto;
+  z-index: 10;
+  position: relative;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.arrow-icon:hover {
+  transform: scale(1.1) rotate(180deg);
+  box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.15);
+  background-color: #f0f9ff;
+}
+
+.arrow-icon svg {
+  transition: transform 0.3s ease;
+}
+
+.arrow-icon:hover svg {
+  transform: rotate(180deg);
+}
+
+.arrow-icon:active {
+  transform: scale(0.95);
+}
+
+/* Modal styles */
+.currency-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: modal-bg-fade 0.3s ease-out;
+}
+
+@keyframes modal-bg-fade {
+  from { background-color: rgba(0, 0, 0, 0); }
+  to { background-color: rgba(0, 0, 0, 0.5); }
+}
+
+.currency-modal-content {
+  background-color: white;
+  border-radius: 1.5rem;
+  width: 90%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  animation: modal-content-show 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@keyframes modal-content-show {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.currency-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.currency-list {
+  max-height: 500px;
+  width: 100%;
+  overflow: hidden;
   overflow-y: auto;
 }
 
-/* Animation for swap button */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
+/* Staggered animation for currency list items */
+.currency-list .currency-item {
+  animation: fadeInStagger 0.3s ease-out backwards;
+}
+
+.currency-list .currency-item:nth-child(1) { animation-delay: 0.05s; }
+.currency-list .currency-item:nth-child(2) { animation-delay: 0.1s; }
+.currency-list .currency-item:nth-child(3) { animation-delay: 0.15s; }
+.currency-list .currency-item:nth-child(4) { animation-delay: 0.2s; }
+.currency-list .currency-item:nth-child(5) { animation-delay: 0.25s; }
+.currency-list .currency-item:nth-child(6) { animation-delay: 0.3s; }
+.currency-list .currency-item:nth-child(7) { animation-delay: 0.35s; }
+.currency-list .currency-item:nth-child(8) { animation-delay: 0.4s; }
+.currency-list .currency-item:nth-child(9) { animation-delay: 0.45s; }
+.currency-list .currency-item:nth-child(10) { animation-delay: 0.5s; }
+
+@keyframes fadeInStagger {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.btn-primary:not(:disabled):hover {
-  animation: pulse 0.5s ease-in-out;
+.currency-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  margin: 0.25rem 0;
 }
 
-/* Custom scrollbar for dropdowns */
+.currency-item:hover {
+  background-color: #f0f9ff;
+  transform: translateY(-2px) translateX(4px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.currency-item:active {
+  background-color: #e0f2fe;
+  transform: translateX(2px);
+}
+
+.currency-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background-color: #bae6fd;
+  opacity: 0.2;
+  transition: width 0.2s ease;
+}
+
+.currency-item:hover::after {
+  width: 4px;
+}
+
+.currency-item:hover img {
+  transform: scale(1.1);
+}
+
+.currency-item img {
+  width: 32px;
+  height: 32px;
+  margin-right: 0.75rem;
+  border-radius: 50%;
+  object-fit: contain;
+  background-color: #f8fafc;
+  padding: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f1f5f9;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: #cbd5e1;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #94a3b8;
 }
 
-/* Token image fallback */
-img[src*="placehold.co"] {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-}
-
-/* Success message animation */
+/* Success message and toast animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -81,6 +345,125 @@ img[src*="placehold.co"] {
   }
 }
 
-.alert-success {
+.success-message {
   animation: fadeInUp 0.3s ease-out;
+  background-color: #10b981;
+  color: white;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 100;
+}
+
+.toast .alert {
+  animation: toastIn 0.5s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  max-width: 350px;
+}
+
+@keyframes toastIn {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+
+/* View Transition API animations */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+}
+
+/* Named view transitions for specific elements */
+.amount-transition {
+  view-transition-name: amount-change;
+}
+
+::view-transition-old(amount-change),
+::view-transition-new(amount-change) {
+  animation: slide-fade 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.token-transition {
+  view-transition-name: token-change;
+}
+
+::view-transition-old(token-change),
+::view-transition-new(token-change) {
+  animation: scale-fade 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.balance-transition {
+  view-transition-name: balance-change;
+}
+
+::view-transition-old(balance-change),
+::view-transition-new(balance-change) {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Animation keyframes */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-fade {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

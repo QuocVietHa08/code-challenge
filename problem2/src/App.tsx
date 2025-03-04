@@ -1,122 +1,113 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState , useMemo } from "react";
 import "./App.css";
-import { ArrowUpDownIcon } from "lucide-react";
+import { ArrowUpDown, XIcon } from "lucide-react";
+import { TOKENS, Token } from "./utlis/constants";
 
-interface Token {
-  currency: string;
-  price: number;
-  date: string;
-}
-
-interface TokenWithUniquePrice extends Token {
-  uniqueId: string;
-}
+const tokens = TOKENS;
 
 function App() {
-  const [fromToken, setFromToken] = useState<TokenWithUniquePrice | null>(null);
-  const [toToken, setToToken] = useState<TokenWithUniquePrice | null>(null);
+  const [fromToken, setFromToken] = useState<Token| null>(tokens[0]);
+  const [toToken, setToToken] = useState<Token | null>(tokens[1]);
   const [fromAmount, setFromAmount] = useState<string>("");
   const [toAmount, setToAmount] = useState<string>("");
-  const [tokens, setTokens] = useState<TokenWithUniquePrice[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [swapSuccess, setSwapSuccess] = useState<boolean>(false);
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
 
-  // Fetch token prices
-  useEffect(() => {
-    const fetchTokens = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(
-          "https://interview.switcheo.com/prices.json"
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch token prices");
-        }
-        const data: Token[] = await response.json();
+  // Modal state
+  const [showFromTokenModal, setShowFromTokenModal] = useState<boolean>(false);
+  const [showToTokenModal, setShowToTokenModal] = useState<boolean>(false);
 
-        // Process tokens to create unique entries by currency
-        const uniqueTokens = new Map<string, TokenWithUniquePrice>();
-        console.log('data--', data)
-
-        data.forEach((token) => {
-          const uniqueId = `${token.currency}-${token.date}`;
-          if (
-            !uniqueTokens.has(token.currency) ||
-            new Date(token.date) >
-              new Date(uniqueTokens.get(token.currency)!.date)
-          ) {
-            uniqueTokens.set(token.currency, { ...token, uniqueId });
-          }
-        });
-
-        const tokenArray = Array.from(uniqueTokens.values());
-        setTokens(tokenArray);
-
-        // Set default tokens
-        if (tokenArray.length >= 2) {
-          const ethToken = tokenArray.find((t) => t.currency === "ETH");
-          const usdcToken = tokenArray.find((t) => t.currency === "USDC");
-
-          setFromToken(ethToken || tokenArray[0]);
-          setToToken(usdcToken || tokenArray[1]);
-        }
-      } catch (err) {
-        setError("Failed to load token data. Please try again later.");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTokens();
-  }, []);
-
+ 
   // Calculate exchange rate
   const exchangeRate = useMemo(() => {
     if (!fromToken || !toToken || fromToken.price <= 0) return 0;
     return toToken.price / fromToken.price;
   }, [fromToken, toToken]);
 
-  // Handle from amount change
+  // Handle from amount change with improved transitions
   const handleFromAmountChange = (value: string) => {
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setFromAmount(value);
-
-      if (value && exchangeRate) {
-        const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(6);
-        setToAmount(calculatedAmount);
+      if (document.startViewTransition) {
+        // Use a single view transition for both state updates for smoother animation
+        document.startViewTransition(() => {
+          setFromAmount(value);
+          
+          if (value && exchangeRate) {
+            const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(6);
+            setToAmount(calculatedAmount);
+          } else {
+            setToAmount("");
+          }
+        });
       } else {
-        setToAmount("");
+        // Fallback for browsers that don't support View Transitions API
+        setFromAmount(value);
+        if (value && exchangeRate) {
+          const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(6);
+          setToAmount(calculatedAmount);
+        } else {
+          setToAmount("");
+        }
       }
     }
   };
 
-  // Handle to amount change
+  // Handle to amount change with improved transitions
   const handleToAmountChange = (value: string) => {
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
-      setToAmount(value);
-
-      if (value && exchangeRate) {
-        const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(6);
-        setFromAmount(calculatedAmount);
+      if (document.startViewTransition) {
+        // Use a single view transition for both state updates for smoother animation
+        document.startViewTransition(() => {
+          setToAmount(value);
+          
+          if (value && exchangeRate) {
+            const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(6);
+            setFromAmount(calculatedAmount);
+          } else {
+            setFromAmount("");
+          }
+        });
       } else {
-        setFromAmount("");
+        // Fallback for browsers that don't support View Transitions API
+        setToAmount(value);
+        if (value && exchangeRate) {
+          const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(6);
+          setFromAmount(calculatedAmount);
+        } else {
+          setFromAmount("");
+        }
       }
     }
   };
 
-  // Swap tokens
+  // Swap tokens with smooth animation
   const handleSwapTokens = () => {
-    const temp = fromToken;
-    setFromToken(toToken);
-    setToToken(temp);
-    setFromAmount(toAmount);
-    setToAmount(fromAmount);
+    setIsSwapping(true);
+    
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        const temp = fromToken;
+        setFromToken(toToken);
+        setToToken(temp);
+        setFromAmount(toAmount);
+        setToAmount(fromAmount);
+        
+        // Reset swapping state after animation completes
+        setTimeout(() => setIsSwapping(false), 600);
+      });
+    } else {
+      const temp = fromToken;
+      setFromToken(toToken);
+      setToToken(temp);
+      setFromAmount(toAmount);
+      setToAmount(fromAmount);
+      
+      // Reset swapping state after a short delay
+      setTimeout(() => setIsSwapping(false), 600);
+    }
   };
 
-  // Execute swap
+  // Execute swap with improved animations
   const executeSwap = () => {
     if (!isFormValid) return;
 
@@ -124,14 +115,29 @@ function App() {
 
     // Simulate API call
     setTimeout(() => {
-      setSwapSuccess(true);
-      setIsSwapping(false);
+      if (document.startViewTransition) {
+        document.startViewTransition(() => {
+          setSwapSuccess(true);
+          setIsSwapping(false);
+        });
+      } else {
+        setSwapSuccess(true);
+        setIsSwapping(false);
+      }
 
       // Reset form after showing success message
       setTimeout(() => {
-        setSwapSuccess(false);
-        setFromAmount("");
-        setToAmount("");
+        if (document.startViewTransition) {
+          document.startViewTransition(() => {
+            setSwapSuccess(false);
+            setFromAmount("");
+            setToAmount("");
+          });
+        } else {
+          setSwapSuccess(false);
+          setFromAmount("");
+          setToAmount("");
+        }
       }, 3000);
     }, 1500);
   };
@@ -147,179 +153,274 @@ function App() {
       toAmount !== "" &&
       parseFloat(toAmount) > 0
     );
-  }, [fromToken, toToken, fromAmount, toAmount]);
+  }, [fromToken, toToken, fromAmount, toAmount]); 
 
-  // Get token image URL
-  // const getTokenImageUrl = (currency: string) => {
-  //   return `https://raw.githubusercontent.com/Switcheo/token-icons/main/tokens/${currency}.svg`;
-  // };
+  // Function to get token icon with fallback
+  const getTokenIcon = (token: Token) => {
+    return token.imageUrl || `https://placehold.co/32x32/orange/white?text=${token.currency.charAt(0)}`;
+  };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="loading loading-spinner loading-lg text-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="alert alert-error shadow-lg max-w-md">
-          <div>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current flex-shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>{error}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Close modals with animation when clicking outside
+  const handleCloseModal = () => {
+    if (document.startViewTransition) {
+      document.startViewTransition(() => {
+        setShowFromTokenModal(false);
+        setShowToTokenModal(false);
+      });
+    } else {
+      setShowFromTokenModal(false);
+      setShowToTokenModal(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="card w-full max-w-md bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h2 className="card-title text-2xl font-bold text-center mb-6">
-            Swap Currencies
-          </h2>
-
-          {/* From Token Section */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-medium">From</span>
-              {fromAmount && (
-                <span className="label-text-alt">
-                  Balance: 10.00 {fromToken?.currency}
-                </span>
-              )}
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <select
-                  className="select select-bordered w-full"
-                  value={fromToken?.uniqueId || ''}
-                  onChange={(e) => {
-                    const selectedToken = tokens.find(token => token.uniqueId === e.target.value);
-                    if (selectedToken) setFromToken(selectedToken);
-                  }}
-                >
-                  <option value="" disabled>Select token</option>
-                  {tokens.map((token) => (
-                    <option key={token.uniqueId} value={token.uniqueId}>
-                      {token.currency}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="0.00"
-                className="input input-bordered flex-1"
-                value={fromAmount}
-                onChange={(e) => handleFromAmountChange(e.target.value)}
-              />
-            </div>
-            {fromToken && fromToken === toToken && (
-              <label className="label">
-                <span className="label-text-alt text-error">
-                  Cannot swap to the same token
-                </span>
-              </label>
-            )}
-          </div>
-
-          {/* Swap Button */}
-          <div className="flex justify-center my-2">
-            <button className="btn btn-sm btn-ghost" onClick={handleSwapTokens}>
-              <ArrowUpDownIcon size={17} />
-            </button>
-          </div>
-
-          {/* To Token Section */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-medium">To</span>
-              {toAmount && (
-                <span className="label-text-alt">
-                  Balance: 0.00 {toToken?.currency}
-                </span>
-              )}
-            </label>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <select
-                  className="select select-bordered w-full"
-                  value={toToken?.uniqueId || ''}
-                  onChange={(e) => {
-                    const selectedToken = tokens.find(token => token.uniqueId === e.target.value);
-                    if (selectedToken) setToToken(selectedToken);
-                  }}
-                >
-                  <option value="" disabled>Select token</option>
-                  {tokens.map((token) => (
-                    <option key={token.uniqueId} value={token.uniqueId}>
-                      {token.currency}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="0.00"
-                className="input input-bordered flex-1"
-                value={toAmount}
-                onChange={(e) => handleToAmountChange(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Exchange Rate */}
-          {fromToken && toToken && exchangeRate > 0 && (
-            <div className="text-sm text-gray-500 mt-2">
-              1 {fromToken.currency} = {exchangeRate.toFixed(6)}{" "}
-              {toToken.currency}
-            </div>
-          )}
-
-          {/* Swap Button */}
-          <div className="justify-center mt-6">
-            <button
-              className={`btn btn-soft w-full ${
-                !isFormValid ? "btn-disabled" : ""
-              }`}
-              onClick={executeSwap}
-              disabled={!isFormValid || isSwapping}
+    <div className="flex flex-col items-center justify-center max-h-screen p-4">
+      <div className="swap-card">
+        {/* From Token Section */}
+        <div className="mb-1 text-sm text-gray-500 text-left ml-2">From</div>
+        <div className="currency-input-container">
+          <div className="flex justify-between items-center">
+            <div
+              className="currency-selector token-transition"
+              onClick={() => {
+                if (document.startViewTransition) {
+                  document.startViewTransition(() => {
+                    setShowFromTokenModal(true);
+                  });
+                } else {
+                  setShowFromTokenModal(true);
+                }
+              }}
             >
-              {isSwapping && <span className="loading loading-spinner"></span>}
-              {isSwapping ? "Swapping..." : "Swap"}
-            </button>
-          </div>
-
-          {/* Success Message */}
-          {swapSuccess && (
-            <div className="alert alert-success shadow-lg mt-4">
-              <div>
-                <span>
-                  Swap successful! {fromAmount} {fromToken?.currency} to{" "}
-                  {toAmount} {toToken?.currency}
-                </span>
-              </div>
+              {fromToken && (
+                <>
+                  <img
+                    src={getTokenIcon(fromToken)}
+                    alt={fromToken.currency}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://placehold.co/32x32/orange/white?text=" +
+                        fromToken.currency.charAt(0);
+                    }}
+                  />
+                  <span className="font-medium">{fromToken.currency}</span>
+                  <span className="ml-1">▼</span>
+                </>
+              )}
             </div>
+            <input
+              type="text"
+              placeholder="0.00"
+              className="currency-amount amount-transition"
+              value={fromAmount}
+              onChange={(e) => handleFromAmountChange(e.target.value)}
+            />
+          </div>
+          {fromAmount ? (
+            <div className="text-right text-sm text-gray-500 mt-2 balance-transition">
+              Balance: 10.00 {fromToken?.currency}
+            </div>
+          ) : (
+            <div className="text-right text-sm text-gray-500 mt-2 balance-transition">Available: 10.00 {fromToken?.currency}</div>
           )}
         </div>
+
+        {/* Swap Button */}
+        <div className={`arrow-icon ${isSwapping ? 'animate-spin' : ''}`} onClick={handleSwapTokens}>
+          {isSwapping ? (
+            <div className="animate-pulse">
+              <ArrowUpDown size={20} />
+            </div>
+          ) : (
+            <ArrowUpDown size={20} />
+          )}
+        </div>
+
+        {/* To Token Section */}
+        <div className="mb-1 text-sm text-gray-500 text-left ml-2">To</div>
+        <div className="currency-input-container">
+          <div className="flex justify-between items-center">
+            <div
+              className="currency-selector token-transition"
+              onClick={() => {
+                if (document.startViewTransition) {
+                  document.startViewTransition(() => {
+                    setShowToTokenModal(true);
+                  });
+                } else {
+                  setShowToTokenModal(true);
+                }
+              }}
+            >
+              {toToken && (
+                <>
+                  <img
+                    src={getTokenIcon(toToken)}
+                    alt={toToken.currency}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://placehold.co/32x32/purple/white?text=" +
+                        toToken.currency.charAt(0);
+                    }}
+                  />
+                  <span className="font-medium">{toToken.currency}</span>
+                  <span className="ml-1">▼</span>
+                </>
+              )}
+            </div>
+            <input
+              type="text"
+              placeholder="0.00"
+              className="currency-amount amount-transition"
+              value={toAmount}
+              onChange={(e) => handleToAmountChange(e.target.value)}
+            />
+          </div>
+          {toAmount ? (
+            <div className="text-right text-sm text-gray-500 mt-2 balance-transition">
+              Balance: 0.00 {toToken?.currency}
+            </div>
+          ) : (
+            <div className="text-right text-sm text-gray-500 mt-2 balance-transition">Available: 0.00 {toToken?.currency}</div>
+          )}
+        </div>
+
+        {/* Exchange Rate */}
+        {fromToken && toToken && exchangeRate > 0 && (
+          <div className="text-sm text-gray-500 mt-3 text-center balance-transition">
+            1 {fromToken.currency} = {exchangeRate.toFixed(6)}{" "}
+            {toToken.currency}
+          </div>
+        )}
+
+        {/* Connect Wallet Button */}
+        <button
+          className="swap-button mt-6"
+          onClick={executeSwap}
+          disabled={!isFormValid || isSwapping}
+        >
+          {isSwapping && <span className="loading loading-spinner mr-2"></span>}
+          {isSwapping ? "Swapping..." : "Swap"}
+        </button>
+
+        {/* Success Message with improved animation */}
+        {swapSuccess && (
+          <div className="toast toast-end">
+            <div className="alert alert-success text-white font-bold animate-bounce-in">
+              <div className="flex items-center">
+                <span>
+                  Swap successful! {fromAmount.toString().length > 4 ? `${fromAmount.toString().slice(0, 5)}...` : fromAmount} {fromToken?.currency} to {toAmount.toString().length > 4 ? `${toAmount.toString().slice(0, 5)}...` : toAmount}{" "}
+                  {toToken?.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* From Token Modal */}
+      {showFromTokenModal && (
+        <div className="currency-modal" onClick={handleCloseModal}>
+          <div
+            className="currency-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="currency-modal-header">
+              <h3 className="text-lg font-bold">Select a token</h3>
+              <button onClick={() => setShowFromTokenModal(false)}>
+                <XIcon size={20} />
+              </button>
+            </div>
+            <div className="currency-list">
+              {tokens.map((token) => (
+                <div
+                  key={token.date}
+                  className="currency-item"
+                  onClick={() => {
+                    if (document.startViewTransition) {
+                      document.startViewTransition(() => {
+                        setFromToken(token);
+                        setShowFromTokenModal(false);
+                      });
+                    } else {
+                      setFromToken(token);
+                      setShowFromTokenModal(false);
+                    }
+                  }}
+                >
+                  <img
+                    src={getTokenIcon(token)}
+                    alt={token.currency}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://placehold.co/32x32/orange/white?text=" +
+                        token.currency.charAt(0);
+                    }}
+                  />
+                  <div>
+                    <div className="font-medium">{token.currency}</div>
+                    <div className="text-sm text-gray-500">
+                      ${token.price.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* To Token Modal */}
+      {showToTokenModal && (
+        <div className="currency-modal" onClick={handleCloseModal}>
+          <div
+            className="currency-modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="currency-modal-header">
+              <h3 className="text-lg font-bold">Select a token</h3>
+              <button onClick={() => setShowToTokenModal(false)}>
+                <XIcon size={20} />
+              </button>
+            </div>
+            <div className="currency-list">
+              {tokens.map((token) => (
+                <div
+                  key={token.date}
+                  className="currency-item"
+                  onClick={() => {
+                    if (document.startViewTransition) {
+                      document.startViewTransition(() => {
+                        setToToken(token);
+                        setShowToTokenModal(false);
+                      });
+                    } else {
+                      setToToken(token);
+                      setShowToTokenModal(false);
+                    }
+                  }}
+                >
+                  <img
+                    src={getTokenIcon(token)}
+                    alt={token.currency}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://placehold.co/32x32/purple/white?text=" +
+                        token.currency.charAt(0);
+                    }}
+                  />
+                  <div>
+                    <div className="font-medium">{token.currency}</div>
+                    <div className="text-sm text-gray-500">
+                      ${token.price.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
