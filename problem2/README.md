@@ -84,25 +84,4 @@ This project showcases several modern web animation techniques:
 
 ## 📱 Browser Compatibility
 
-The application uses the View Transitions API which is supported in modern browsers. For browsers without support, the application gracefully falls back to standard React state transitions.
-
-## 🔄 Token Data
-
-Token data is sourced from the Switcheo API and includes:
-- Currency code
-- Current price
-- Date of price update
-- Token icon URL
-
-## 🧩 Future Enhancements
-
-- Add wallet connection functionality
-- Implement actual token swap execution
-- Add transaction history
-- Implement dark mode
-- Add more detailed token information
-
-## 📄 License
-
-MIT
-
+The application uses the View Transitions API which is supported in modern browsers. Chrome 111+. For browsers without support, the application gracefully falls back to standard React state transitions.
