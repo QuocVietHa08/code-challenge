@@ -1,23 +1,23 @@
-import { useState , useMemo } from "react";
+import { useState, useMemo } from "react";
 import "./App.css";
-import { ArrowUpDown, XIcon } from "lucide-react";
+import { ArrowDown, ArrowUpDown, XIcon } from "lucide-react";
 import { TOKENS, Token } from "./utlis/constants";
 
 const tokens = TOKENS;
 
 function App() {
-  const [fromToken, setFromToken] = useState<Token| null>(tokens[0]);
+  const [fromToken, setFromToken] = useState<Token | null>(tokens[0]);
   const [toToken, setToToken] = useState<Token | null>(tokens[1]);
   const [fromAmount, setFromAmount] = useState<string>("");
   const [toAmount, setToAmount] = useState<string>("");
   const [swapSuccess, setSwapSuccess] = useState<boolean>(false);
+  const [swapError, setSwapError] = useState<boolean>(false);
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
 
   // Modal state
   const [showFromTokenModal, setShowFromTokenModal] = useState<boolean>(false);
   const [showToTokenModal, setShowToTokenModal] = useState<boolean>(false);
 
- 
   // Calculate exchange rate
   const exchangeRate = useMemo(() => {
     if (!fromToken || !toToken || fromToken.price <= 0) return 0;
@@ -31,9 +31,11 @@ function App() {
         // Use a single view transition for both state updates for smoother animation
         document.startViewTransition(() => {
           setFromAmount(value);
-          
+
           if (value && exchangeRate) {
-            const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(6);
+            const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(
+              6
+            );
             setToAmount(calculatedAmount);
           } else {
             setToAmount("");
@@ -43,7 +45,9 @@ function App() {
         // Fallback for browsers that don't support View Transitions API
         setFromAmount(value);
         if (value && exchangeRate) {
-          const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(6);
+          const calculatedAmount = (parseFloat(value) * exchangeRate).toFixed(
+            6
+          );
           setToAmount(calculatedAmount);
         } else {
           setToAmount("");
@@ -59,9 +63,11 @@ function App() {
         // Use a single view transition for both state updates for smoother animation
         document.startViewTransition(() => {
           setToAmount(value);
-          
+
           if (value && exchangeRate) {
-            const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(6);
+            const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(
+              6
+            );
             setFromAmount(calculatedAmount);
           } else {
             setFromAmount("");
@@ -71,7 +77,9 @@ function App() {
         // Fallback for browsers that don't support View Transitions API
         setToAmount(value);
         if (value && exchangeRate) {
-          const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(6);
+          const calculatedAmount = (parseFloat(value) / exchangeRate).toFixed(
+            6
+          );
           setFromAmount(calculatedAmount);
         } else {
           setFromAmount("");
@@ -83,7 +91,7 @@ function App() {
   // Swap tokens with smooth animation
   const handleSwapTokens = () => {
     setIsSwapping(true);
-    
+
     if (document.startViewTransition) {
       document.startViewTransition(() => {
         const temp = fromToken;
@@ -91,7 +99,7 @@ function App() {
         setToToken(temp);
         setFromAmount(toAmount);
         setToAmount(fromAmount);
-        
+
         // Reset swapping state after animation completes
         setTimeout(() => setIsSwapping(false), 600);
       });
@@ -101,14 +109,14 @@ function App() {
       setToToken(temp);
       setFromAmount(toAmount);
       setToAmount(fromAmount);
-      
+
       // Reset swapping state after a short delay
       setTimeout(() => setIsSwapping(false), 600);
     }
   };
 
   // Execute swap with improved animations
-  const executeSwap = () => {
+  const executeSwap = (isErrorCase: boolean = false) => {
     if (!isFormValid) return;
 
     setIsSwapping(true);
@@ -117,11 +125,19 @@ function App() {
     setTimeout(() => {
       if (document.startViewTransition) {
         document.startViewTransition(() => {
-          setSwapSuccess(true);
+          if (isErrorCase) {
+            setSwapError(true);
+          } else {
+            setSwapSuccess(true);
+          }
           setIsSwapping(false);
         });
       } else {
-        setSwapSuccess(true);
+        if (isErrorCase) {
+          setSwapError(true);
+        } else {
+          setSwapSuccess(true);
+        }
         setIsSwapping(false);
       }
 
@@ -129,12 +145,20 @@ function App() {
       setTimeout(() => {
         if (document.startViewTransition) {
           document.startViewTransition(() => {
-            setSwapSuccess(false);
+            if (isErrorCase) {
+              setSwapError(false);
+            } else {
+              setSwapSuccess(false);
+            }
             setFromAmount("");
             setToAmount("");
           });
         } else {
-          setSwapSuccess(false);
+          if (isErrorCase) {
+            setSwapError(false);
+          } else {
+            setSwapSuccess(false);
+          }
           setFromAmount("");
           setToAmount("");
         }
@@ -153,11 +177,14 @@ function App() {
       toAmount !== "" &&
       parseFloat(toAmount) > 0
     );
-  }, [fromToken, toToken, fromAmount, toAmount]); 
+  }, [fromToken, toToken, fromAmount, toAmount]);
 
   // Function to get token icon with fallback
   const getTokenIcon = (token: Token) => {
-    return token.imageUrl || `https://placehold.co/32x32/orange/white?text=${token.currency.charAt(0)}`;
+    return (
+      token.imageUrl ||
+      `https://placehold.co/32x32/orange/white?text=${token.currency.charAt(0)}`
+    );
   };
 
   // Close modals with animation when clicking outside
@@ -216,24 +243,25 @@ function App() {
               onChange={(e) => handleFromAmountChange(e.target.value)}
             />
           </div>
-          {fromAmount ? (
+          {/* {fromAmount ? (
             <div className="text-right text-sm text-gray-500 mt-2 balance-transition">
               Balance: 10.00 {fromToken?.currency}
             </div>
           ) : (
             <div className="text-right text-sm text-gray-500 mt-2 balance-transition">Available: 10.00 {fromToken?.currency}</div>
-          )}
+          )} */}
         </div>
 
         {/* Swap Button */}
-        <div className={`arrow-icon ${isSwapping ? 'animate-spin' : ''}`} onClick={handleSwapTokens}>
-          {isSwapping ? (
-            <div className="animate-pulse">
+        <div className={`arrow-icon`} onClick={handleSwapTokens}>
+          <div className="icon-container">
+            <div className="default-icon">
+              <ArrowDown size={20} />
+            </div>
+            <div className="hover-icon">
               <ArrowUpDown size={20} />
             </div>
-          ) : (
-            <ArrowUpDown size={20} />
-          )}
+          </div>
         </div>
 
         {/* To Token Section */}
@@ -276,13 +304,13 @@ function App() {
               onChange={(e) => handleToAmountChange(e.target.value)}
             />
           </div>
-          {toAmount ? (
+          {/* {toAmount ? (
             <div className="text-right text-sm text-gray-500 mt-2 balance-transition">
               Balance: 0.00 {toToken?.currency}
             </div>
           ) : (
             <div className="text-right text-sm text-gray-500 mt-2 balance-transition">Available: 0.00 {toToken?.currency}</div>
-          )}
+          )} */}
         </div>
 
         {/* Exchange Rate */}
@@ -296,11 +324,20 @@ function App() {
         {/* Connect Wallet Button */}
         <button
           className="swap-button mt-6"
-          onClick={executeSwap}
+          onClick={() => executeSwap()}
           disabled={!isFormValid || isSwapping}
         >
           {isSwapping && <span className="loading loading-spinner mr-2"></span>}
-          {isSwapping ? "Swapping..." : "Swap"}
+          {isSwapping ? "Swapping..." : "Success Case"}
+        </button>
+
+        <button
+          className="swap-button-error  mt-6"
+          onClick={() => executeSwap(true)}
+          disabled={!isFormValid || isSwapping}
+        >
+          {isSwapping && <span className="loading loading-spinner mr-2"></span>}
+          {isSwapping ? "Swapping..." : "Error Case"}
         </button>
 
         {/* Success Message with improved animation */}
@@ -309,7 +346,34 @@ function App() {
             <div className="alert alert-success text-white font-bold animate-bounce-in">
               <div className="flex items-center">
                 <span>
-                  Swap successful! {fromAmount.toString().length > 4 ? `${fromAmount.toString().slice(0, 5)}...` : fromAmount} {fromToken?.currency} to {toAmount.toString().length > 4 ? `${toAmount.toString().slice(0, 5)}...` : toAmount}{" "}
+                  Swap successful!{" "}
+                  {fromAmount.toString().length > 4
+                    ? `${fromAmount.toString().slice(0, 5)}...`
+                    : fromAmount}{" "}
+                  {fromToken?.currency} to{" "}
+                  {toAmount.toString().length > 4
+                    ? `${toAmount.toString().slice(0, 5)}...`
+                    : toAmount}{" "}
+                  {toToken?.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {swapError && (
+          <div className="toast toast-end">
+            <div className="alert alert-error text-white font-bold animate-bounce-in">
+              <div className="flex items-center">
+                <span>
+                  Swap failed!{" "}
+                  {fromAmount.toString().length > 4
+                    ? `${fromAmount.toString().slice(0, 5)}...`
+                    : fromAmount}{" "}
+                  {fromToken?.currency} to{" "}
+                  {toAmount.toString().length > 4
+                    ? `${toAmount.toString().slice(0, 5)}...`
+                    : toAmount}{" "}
                   {toToken?.currency}
                 </span>
               </div>
