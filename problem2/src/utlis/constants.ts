@@ -39,7 +39,7 @@ export const TOKENS: Token[] = [
   },
   { 
     currency: "USD", 
-    date: "2023-08-29T07:10:30.000Z", 
+    date: "2023-08-29T07:10:31.000Z", 
     price: 1,
     imageUrl: getTokenImageUrl("USD"),
   },
@@ -189,7 +189,7 @@ export const TOKENS: Token[] = [
   },
   { 
     currency: "USDC", 
-    date: "2023-08-29T07:10:30.000Z", 
+    date: "2023-08-29T07:10:21.000Z", 
     price: 1,
     imageUrl: getTokenImageUrl("USDC"),
   },
