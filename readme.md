@@ -1,10 +1,20 @@
-# 99Tech Code Challenge #1 #
+# 🚀 Cool Coding Challenge
 
-Note that if you fork this repository, your responses may be publicly linked to this repo.  
-Please submit your application along with the solutions attached or linked.   
+A collection of interesting coding problems and their solutions.
 
-It is important that you minimally attempt the problems, even if you do not arrive at a working solution.
+## 📋 Challenges
 
-## Submission ##
-You can either provide a link to an online repository, attach the solution in your application, or whichever method you prefer.
-We're cool as long as we can view your solution without any pain.
+### 1️⃣ Sum of n Numbers
+**Problem:** [View Problem](src/problem1/problem.js)
+
+### 2️⃣ Super Form
+**Problem:** [View Live Link](src/problem2/index.html)
+
+### 3️⃣ Bug Detector
+**Problem:** [View Problem](src/problem3/solution.md)
+
+## 💻 How to Use
+
+Check all the problem
+
+That it folks :D
