@@ -24,7 +24,11 @@ export function useSwapForm(tokens: Token[]) {
     mode: 'onChange',
   });
 
-  const { fromToken, toToken, fromAmount, toAmount } = useWatch({ control });
+  const watched = useWatch({ control });
+  const fromToken = (watched.fromToken ?? null) as Token | null;
+  const toToken = (watched.toToken ?? null) as Token | null;
+  const fromAmount = (watched.fromAmount ?? '') as string;
+  const toAmount = (watched.toAmount ?? '') as string;
 
   // Set default tokens when prices load
   useEffect(() => {
@@ -83,14 +87,10 @@ export function useSwapForm(tokens: Token[]) {
   }, [fromToken, fromAmount, setValue]);
 
   const swapDirection = useCallback(() => {
-    const newFrom = toToken;
-    const newTo = fromToken;
-    const newFromAmt = toAmount;
-    const newToAmt = fromAmount;
-    setValue('fromToken', newFrom);
-    setValue('toToken', newTo);
-    setValue('fromAmount', newFromAmt);
-    setValue('toAmount', newToAmt);
+    setValue('fromToken', toToken);
+    setValue('toToken', fromToken);
+    setValue('fromAmount', toAmount);
+    setValue('toAmount', fromAmount);
   }, [fromToken, toToken, fromAmount, toAmount, setValue]);
 
   // --- Validation ---
@@ -144,7 +144,7 @@ export function useSwapForm(tokens: Token[]) {
   }, [fromToken, toToken, fromAmount, toAmount, isValid, reset]);
 
   return {
-    form: { fromToken: fromToken ?? null, toToken: toToken ?? null, fromAmount: fromAmount ?? '', toAmount: toAmount ?? '' },
+    form: { fromToken, toToken, fromAmount, toAmount },
     isDirty,
     exchangeRate,
     priceImpact,
